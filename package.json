@@ -1,12 +1,15 @@
 {
   "dependencies": {
-    "@prisma/client": "^7.8.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "@prisma/adapter-neon": "^7.8.0",
     "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/supabase-js": "^2.107.0",
     "date-fns": "^4.4.0",
+    "ws": "^8.21.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "prisma": "^7.8.0"
+    "@prisma/client": "^5.22.0",
+    "prisma": "^5.22.0"
   }
 }

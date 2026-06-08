@@ -1,13 +1,138 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  LAWYER
+  HEAD
+  EMPLOYEE
+}
+
+enum ContractStatus {
+  DRAFT
+  COLLECTING
+  REVIEWING
+  APPROVAL
+  SIGNED
+  ARCHIVED
+}
+
+enum DepartmentTaskStatus {
+  PENDING
+  IN_PROGRESS
+  SUBMITTED
+}
+
+enum ApprovalAction {
+  APPROVED
+  RETURNED
+}
+
+model Department {
+  id                  String               @id @default(cuid())
+  name                String               @unique
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  users               User[]
+  contractDepartments ContractDepartment[]
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String
+  role         Role
+  departmentId String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  department   Department?   @relation(fields: [departmentId], references: [id])
+  comments     Comment[]
+  approvals    Approval[]
+  activityLogs ActivityLog[]
+  contracts    Contract[]    @relation("ContractInitiator")
+}
+
+model Contract {
+  id                  String               @id @default(cuid())
+  title               String
+  counterparty        String
+  object              String?
+  amount              Decimal?
+  status              ContractStatus       @default(DRAFT)
+  initiatorId         String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  initiator           User                 @relation("ContractInitiator", fields: [initiatorId], references: [id])
+  files               ContractFile[]
+  contractDepartments ContractDepartment[]
+  comments            Comment[]
+  approvals           Approval[]
+  activityLogs        ActivityLog[]
+}
+
+model ContractFile {
+  id          String   @id @default(cuid())
+  contractId  String
+  version     Int
+  filename    String
+  storagePath String
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+  contract    Contract @relation(fields: [contractId], references: [id])
+
+  @@unique([contractId, version])
+}
+
+model ContractDepartment {
+  id           String               @id @default(cuid())
+  contractId   String
+  departmentId String
+  status       DepartmentTaskStatus @default(PENDING)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  contract     Contract             @relation(fields: [contractId], references: [id])
+  department   Department           @relation(fields: [departmentId], references: [id])
+
+  @@unique([contractId, departmentId])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  contractId String
+  authorId   String
+  text       String
+  createdAt  DateTime @default(now())
+  contract   Contract @relation(fields: [contractId], references: [id])
+  author     User     @relation(fields: [authorId], references: [id])
+}
+
+model Approval {
+  id          String         @id @default(cuid())
+  contractId  String
+  userId      String
+  action      ApprovalAction
+  fileVersion Int
+  comment     String?
+  createdAt   DateTime       @default(now())
+  contract    Contract       @relation(fields: [contractId], references: [id])
+  user        User           @relation(fields: [userId], references: [id])
+}
+
+model ActivityLog {
+  id         String    @id @default(cuid())
+  contractId String?
+  userId     String
+  action     String
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+  contract   Contract? @relation(fields: [contractId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
 }
