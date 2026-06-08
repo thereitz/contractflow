@@ -2,9 +2,8 @@ import { cookies } from 'next/headers'
 import { prisma } from './prisma'
 import jwt from 'jsonwebtoken'
 
-const SECRET = process.env.JWT_SECRET!
-
 export async function getCurrentUser() {
+  const SECRET = process.env.JWT_SECRET!
   const cookieStore = await cookies()
   const token = cookieStore.get('token')?.value
   if (!token) return null
@@ -22,5 +21,6 @@ export async function getCurrentUser() {
 }
 
 export function createToken(userId: string) {
+  const SECRET = process.env.JWT_SECRET!
   return jwt.sign({ userId }, SECRET, { expiresIn: '7d' })
 }
