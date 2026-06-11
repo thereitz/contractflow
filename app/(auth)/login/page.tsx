@@ -18,6 +18,7 @@ export default function LoginPage() {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
       body: JSON.stringify({ email, password }),
     })
 
@@ -27,8 +28,7 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-
-    router.push('/contracts')
+    window.location.href = '/contracts'
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import NotificationBell from '@/components/NotificationBell'
 
 export default function DashboardLayout({
   children,
@@ -28,6 +29,13 @@ export default function DashboardLayout({
         <Link href="/departments" className="text-sm text-gray-600 hover:text-gray-900">
           Отделы
         </Link>
+        <Link href="/analytics" className="text-sm text-gray-600 hover:text-gray-900">
+          Аналитика
+        </Link>
+        <Link href="/profile" className="text-sm text-gray-600 hover:text-gray-900">
+          Профиль
+        </Link>
+        <NotificationBell />
         <Link href="/logs" className="text-sm text-gray-600 hover:text-gray-900">
           Журнал
         </Link>

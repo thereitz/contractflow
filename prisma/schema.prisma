@@ -58,6 +58,7 @@ model User {
   comments     Comment[]
   approvals    Approval[]
   activityLogs ActivityLog[]
+  notifications Notification[]
   contracts    Contract[]    @relation("ContractInitiator")
 }
 
@@ -136,4 +137,16 @@ model ActivityLog {
   createdAt  DateTime  @default(now())
   contract   Contract? @relation(fields: [contractId], references: [id])
   user       User      @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  userId     String
+  title      String
+  message    String?
+  link       String?
+  read       Boolean  @default(false)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
 }

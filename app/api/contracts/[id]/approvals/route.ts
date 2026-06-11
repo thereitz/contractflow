@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
+import { createNotification } from '@/lib/notifications'
 
 export async function POST(
   req: NextRequest,
@@ -50,6 +51,16 @@ export async function POST(
       metadata: { fileVersion: currentVersion, comment }
     }
   })
+
+  if (contract.initiatorId !== user.id) {
+    await createNotification(
+      contract.initiatorId,
+      action === 'APPROVED' ? 'Договор согласован' : 'Договор возвращён',
+      `${user.name} ${action === 'APPROVED' ? 'согласовал' : 'вернул'} договор "${contract.title}".`,
+      `/contracts/${params.id}`,
+      { contractId: params.id, action, comment }
+    )
+  }
 
   if (action === 'RETURNED') {
     await prisma.contract.update({

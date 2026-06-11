@@ -3,17 +3,33 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const where = ['HEAD', 'EMPLOYEE'].includes(user.role) && user.departmentId
+  const search = req.nextUrl.searchParams.get('search')?.trim() || ''
+
+  const baseWhere = ['HEAD', 'EMPLOYEE'].includes(user.role) && user.departmentId
     ? {
         contractDepartments: {
           some: { departmentId: user.departmentId }
         }
       }
     : {}
+
+  const where = search
+    ? {
+        AND: [
+          baseWhere,
+          {
+            OR: [
+              { title: { contains: search, mode: 'insensitive' as const } },
+              { counterparty: { contains: search, mode: 'insensitive' as const } },
+            ],
+          },
+        ],
+      }
+    : baseWhere
 
   const contracts = await prisma.contract.findMany({
     where,

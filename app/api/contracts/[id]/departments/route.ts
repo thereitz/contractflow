@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
+import { createNotifications } from '@/lib/notifications'
 
 export async function POST(
   req: NextRequest,
@@ -17,6 +18,9 @@ export async function POST(
   if (!departmentIds?.length) {
     return NextResponse.json({ error: 'Выберите отделы' }, { status: 400 })
   }
+
+  const contract = await prisma.contract.findUnique({ where: { id: params.id } })
+  if (!contract) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   // Добавляем только новые отделы
   const existing = await prisma.contractDepartment.findMany({
@@ -34,7 +38,10 @@ export async function POST(
   })
 
   for (const departmentId of newIds) {
-    const dept = await prisma.department.findUnique({ where: { id: departmentId } })
+    const dept = await prisma.department.findUnique({
+      where: { id: departmentId },
+      include: { users: { where: { role: 'HEAD' } } },
+    })
     await prisma.activityLog.create({
       data: {
         contractId: params.id,
@@ -43,6 +50,17 @@ export async function POST(
         metadata: { departmentId, departmentName: dept?.name }
       }
     })
+
+    const headIds = dept?.users.map(h => h.id) ?? []
+    if (headIds.length > 0) {
+      await createNotifications(
+        headIds,
+        'Ваш отдел назначен к договору',
+        `Договор "${contract.title}" назначен вашему отделу ${dept?.name || ''}`.trim(),
+        `/contracts/${params.id}`,
+        { contractId: params.id, departmentId, departmentName: dept?.name }
+      )
+    }
   }
 
   return NextResponse.json({ data: { ok: true } })

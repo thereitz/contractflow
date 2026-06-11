@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -25,15 +25,27 @@ export default function ContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ title: '', counterparty: '', object: '', amount: '' })
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function load() {
-    const res = await fetch('/api/contracts')
+  async function load(searchValue = search) {
+    const query = searchValue ? `?search=${encodeURIComponent(searchValue)}` : ''
+    const res = await fetch(`/api/contracts${query}`, { cache: 'no-store' })
     const json = await res.json()
     setContracts(json.data || [])
   }
 
   useEffect(() => { load() }, [])
+
+  async function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await load(search)
+  }
+
+  async function handleClearSearch() {
+    setSearch('')
+    await load('')
+  }
 
   async function handleCreate() {
     if (!form.title || !form.counterparty) return
@@ -62,6 +74,30 @@ export default function ContractsPage() {
           + Новый договор
         </button>
       </div>
+
+      <form onSubmit={handleSearch} className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 items-center gap-2">
+          <input
+            placeholder="Поиск по названию или контрагенту"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm"
+          />
+          <button
+            type="submit"
+            className="bg-gray-800 text-white px-4 py-2 rounded text-sm"
+          >
+            Найти
+          </button>
+          <button
+            type="button"
+            onClick={handleClearSearch}
+            className="border px-4 py-2 rounded text-sm"
+          >
+            Сбросить
+          </button>
+        </div>
+      </form>
 
       {showForm && (
         <div className="border rounded p-4 mb-6 bg-gray-50 grid grid-cols-2 gap-3">

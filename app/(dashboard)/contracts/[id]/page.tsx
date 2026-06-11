@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import ArchiveButton from '@/components/ArchiveButton'
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Черновик',
@@ -29,16 +30,39 @@ export default function ContractPage() {
   const [loading, setLoading] = useState(false)
   const [showDeptForm, setShowDeptForm] = useState(false)
   const [showReturnForm, setShowReturnForm] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function load() {
-    const [c, d, u] = await Promise.all([
-      fetch(`/api/contracts/${id}`).then(r => r.json()),
-      fetch('/api/departments').then(r => r.json()),
-      fetch('/api/auth/me').then(r => r.json()),
-    ])
-    setContract(c.data)
-    setAllDepts(d.data || [])
-    setCurrentUser(u.data)
+    if (!id) return
+    setLoading(true)
+    setError(null)
+
+    try {
+      const [cRes, dRes, uRes] = await Promise.all([
+        fetch(`/api/contracts/${id}`),
+        fetch('/api/departments'),
+        fetch('/api/auth/me'),
+      ])
+
+      const [c, d, u] = await Promise.all([
+        cRes.json(),
+        dRes.json(),
+        uRes.json(),
+      ])
+
+      if (!cRes.ok) throw new Error(c.error || 'Ошибка загрузки договора')
+      if (!dRes.ok) throw new Error(d.error || 'Ошибка загрузки отделов')
+      if (!uRes.ok) throw new Error(u.error || 'Ошибка загрузки пользователя')
+
+      setContract(c.data)
+      setAllDepts(d.data || [])
+      setCurrentUser(u.data)
+    } catch (err: any) {
+      console.error(err)
+      setError(err?.message || 'Произошла ошибка при загрузке данных')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { if (id) load() }, [id])
@@ -46,68 +70,127 @@ export default function ContractPage() {
   async function handleAssignDepts() {
     if (!selectedDepts.length) return
     setLoading(true)
-    await fetch(`/api/contracts/${id}/departments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ departmentIds: selectedDepts }),
-    })
-    setSelectedDepts([])
-    setShowDeptForm(false)
-    await load()
-    setLoading(false)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/contracts/${id}/departments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ departmentIds: selectedDepts }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Не удалось назначить отделы')
+
+      setSelectedDepts([])
+      setShowDeptForm(false)
+      await load()
+    } catch (err: any) {
+      console.error(err)
+      setError(err?.message || 'Не удалось назначить отделы')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSendCollecting() {
     setLoading(true)
-    const res = await fetch(`/api/contracts/${id}/send-collecting`, { method: 'POST' })
-    const json = await res.json()
-    if (!res.ok) alert(json.error)
-    await load()
-    setLoading(false)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/contracts/${id}/send-collecting`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Не удалось отправить на сбор информации')
+      await load()
+    } catch (err: any) {
+      console.error(err)
+      setError(err?.message || 'Не удалось отправить на сбор информации')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSendApproval() {
     setLoading(true)
-    await fetch(`/api/contracts/${id}/send-approval`, { method: 'POST' })
-    await load()
-    setLoading(false)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/contracts/${id}/send-approval`, { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Не удалось отправить на согласование')
+      await load()
+    } catch (err: any) {
+      console.error(err)
+      setError(err?.message || 'Не удалось отправить на согласование')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleDeptStatus(deptId: string, status: string) {
     setLoading(true)
-    await fetch(`/api/contracts/${id}/departments/${deptId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-    await load()
-    setLoading(false)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/contracts/${id}/departments/${deptId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Не удалось обновить статус отдела')
+      await load()
+    } catch (err: any) {
+      console.error(err)
+      setError(err?.message || 'Не удалось обновить статус отдела')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleApproval(action: string) {
     setLoading(true)
-    await fetch(`/api/contracts/${id}/approvals`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, comment: returnComment }),
-    })
-    setReturnComment('')
-    setShowReturnForm(false)
-    await load()
-    setLoading(false)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/contracts/${id}/approvals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, comment: returnComment }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Не удалось выполнить действие согласования')
+      setReturnComment('')
+      setShowReturnForm(false)
+      await load()
+    } catch (err: any) {
+      console.error(err)
+      setError(err?.message || 'Не удалось выполнить действие согласования')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleComment() {
     if (!comment.trim()) return
     setLoading(true)
-    await fetch(`/api/contracts/${id}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: comment }),
-    })
-    setComment('')
-    await load()
-    setLoading(false)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/contracts/${id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: comment }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Не удалось добавить комментарий')
+      setComment('')
+      await load()
+    } catch (err: any) {
+      console.error(err)
+      setError(err?.message || 'Не удалось добавить комментарий')
+    } finally {
+      setLoading(false)
+    }
   }
 
   function toggleDept(deptId: string) {
@@ -118,26 +201,43 @@ export default function ContractPage() {
 
   if (!contract) return <div>Загрузка...</div>
 
-  const assignedIds = contract.contractDepartments.map((cd: any) => cd.departmentId)
+  const assignedIds = contract.contractDepartments?.map((cd: any) => cd.departmentId) ?? []
   const unassignedDepts = allDepts.filter(d => !assignedIds.includes(d.id))
   const isLawyer = ['LAWYER', 'SUPER_ADMIN'].includes(currentUser?.role)
   const isHead = ['HEAD', 'SUPER_ADMIN'].includes(currentUser?.role)
-  const myDept = contract.contractDepartments.find(
+  const myDept = contract.contractDepartments?.find(
     (cd: any) => cd.departmentId === currentUser?.departmentId
   )
 
   return (
     <div className="max-w-4xl">
+      {error && (
+        <div className="mb-4 rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Заголовок + статус + кнопка архива */}
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold">{contract.title}</h1>
           <p className="text-gray-500 text-sm mt-1">{contract.counterparty}</p>
         </div>
-        <span className="border rounded px-3 py-1 text-sm">
-          {STATUS_LABELS[contract.status]}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="border rounded px-3 py-1 text-sm">
+            {STATUS_LABELS[contract.status]}
+          </span>
+          {contract.status === 'SIGNED' &&
+           ['SUPER_ADMIN', 'ADMIN', 'LAWYER'].includes(currentUser?.role) && (
+            <ArchiveButton
+              contractId={contract.id}
+              contractTitle={contract.title}
+            />
+          )}
+        </div>
       </div>
 
+      {/* Основные поля */}
       <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
         <div><span className="text-gray-500">Инициатор:</span> {contract.initiator.name}</div>
         <div><span className="text-gray-500">Сумма:</span> {contract.amount || '—'}</div>
@@ -147,7 +247,7 @@ export default function ContractPage() {
       {/* Файлы */}
       <div className="mb-6">
         <h2 className="font-medium mb-2">Файлы</h2>
-        {contract.files.length === 0
+        {!contract.files || contract.files.length === 0
           ? <p className="text-sm text-gray-500">Файлов нет</p>
           : contract.files.map((f: any) => (
             <div key={f.id} className="text-sm border-b py-2 flex justify-between">
@@ -169,7 +269,7 @@ export default function ContractPage() {
                 + Назначить
               </button>
             )}
-            {isLawyer && contract.status === 'DRAFT' && contract.contractDepartments.length > 0 && (
+            {isLawyer && contract.status === 'DRAFT' && (contract.contractDepartments?.length ?? 0) > 0 && (
               <button onClick={handleSendCollecting} disabled={loading}
                 className="text-sm bg-blue-600 text-white px-3 py-1 rounded">
                 Отправить на сбор информации
@@ -200,7 +300,7 @@ export default function ContractPage() {
           </div>
         )}
 
-        {contract.contractDepartments.length === 0
+        {(contract.contractDepartments?.length ?? 0) === 0
           ? <p className="text-sm text-gray-500">Отделы не назначены</p>
           : contract.contractDepartments.map((cd: any) => (
             <div key={cd.id} className="text-sm border-b py-2 flex justify-between items-center">
@@ -260,7 +360,7 @@ export default function ContractPage() {
       {/* Комментарии */}
       <div className="mb-6">
         <h2 className="font-medium mb-2">Комментарии</h2>
-        {contract.comments.length === 0
+        {!contract.comments || contract.comments.length === 0
           ? <p className="text-sm text-gray-500 mb-3">Комментариев нет</p>
           : contract.comments.map((c: any) => (
             <div key={c.id} className="border-b py-2">
@@ -286,13 +386,18 @@ export default function ContractPage() {
       {/* История */}
       <div>
         <h2 className="font-medium mb-2">История</h2>
-        {contract.activityLogs.map((log: any) => (
-          <div key={log.id} className="text-sm border-b py-2 flex justify-between">
-            <span>{log.user.name} — {log.action}</span>
-            <span className="text-gray-400">{new Date(log.createdAt).toLocaleString('ru-RU')}</span>
-          </div>
-        ))}
+        {(!contract.activityLogs || contract.activityLogs.length === 0) ? (
+          <p className="text-sm text-gray-500">Записей истории нет</p>
+        ) : (
+          contract.activityLogs.map((log: any) => (
+            <div key={log.id} className="text-sm border-b py-2 flex justify-between">
+              <span>{log.user?.name || 'Система'} — {log.action}</span>
+              <span className="text-gray-400">{new Date(log.createdAt).toLocaleString('ru-RU')}</span>
+            </div>
+          ))
+        )}
       </div>
+
     </div>
   )
 }
