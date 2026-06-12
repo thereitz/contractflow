@@ -61,26 +61,26 @@ export default async function AnalyticsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4 mb-6">
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
+        <div className="card">
           <p className="text-sm text-gray-500">Всего договоров</p>
           <p className="mt-3 text-3xl font-semibold text-gray-900">{totalContracts}</p>
         </div>
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
+        <div className="card">
           <p className="text-sm text-gray-500">Активные</p>
           <p className="mt-3 text-3xl font-semibold text-gray-900">{activeContracts}</p>
         </div>
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
+        <div className="card">
           <p className="text-sm text-gray-500">Подписано</p>
           <p className="mt-3 text-3xl font-semibold text-gray-900">{signedContracts}</p>
         </div>
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
+        <div className="card">
           <p className="text-sm text-gray-500">Архив</p>
           <p className="mt-3 text-3xl font-semibold text-gray-900">{archivedContracts}</p>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-lg border bg-white p-6 shadow-sm">
+        <section className="card">
           <h2 className="text-lg font-semibold mb-4">Договоры по статусам</h2>
           <div className="space-y-3">
             {statusGroups.map(group => (
@@ -92,7 +92,7 @@ export default async function AnalyticsPage() {
           </div>
         </section>
 
-        <section className="rounded-lg border bg-white p-6 shadow-sm">
+        <section className="card">
           <h2 className="text-lg font-semibold mb-4">Договоры по отделам</h2>
           {departmentGroups.length === 0 ? (
             <p className="text-sm text-gray-600">Нет данных по отделам.</p>
@@ -109,8 +109,13 @@ export default async function AnalyticsPage() {
         </section>
       </div>
 
-      <section className="mt-6 rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Последние события</h2>
+      <section className="card mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold">Последние события</h2>
+            <p className="text-sm text-gray-500">События логов по последним изменениям в договорах.</p>
+          </div>
+        </div>
         <div className="space-y-3">
           {latestActivities.map(log => (
             <div key={log.id} className="rounded-lg border bg-gray-50 p-4">

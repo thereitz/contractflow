@@ -224,12 +224,12 @@ export default function ContractPage() {
       )}
 
       {/* Заголовок + статус + кнопка архива */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="grid gap-4 md:grid-cols-[1fr_auto] items-start mb-6">
         <div>
-          <h1 className="text-2xl font-semibold">{contract.title}</h1>
-          <p className="text-gray-500 text-sm mt-1">{contract.counterparty}</p>
+          <h1 className="text-3xl font-semibold tracking-tight">{contract.title}</h1>
+          <p className="text-gray-500 text-sm mt-2">{contract.counterparty}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${statusClass}`}>
             {STATUS_LABELS[contract.status]}
           </span>
@@ -244,10 +244,19 @@ export default function ContractPage() {
       </div>
 
       {/* Основные поля */}
-      <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-        <div><span className="text-gray-500">Инициатор:</span> {contract.initiator.name}</div>
-        <div><span className="text-gray-500">Сумма:</span> {contract.amount || '—'}</div>
-        <div className="col-span-2"><span className="text-gray-500">Предмет:</span> {contract.object || '—'}</div>
+      <div className="grid gap-4 md:grid-cols-3 mb-6 text-sm">
+        <div className="rounded-lg border bg-gray-50 p-4">
+          <p className="text-gray-500">Инициатор</p>
+          <p className="mt-2 font-medium text-gray-900">{contract.initiator.name}</p>
+        </div>
+        <div className="rounded-lg border bg-gray-50 p-4">
+          <p className="text-gray-500">Сумма</p>
+          <p className="mt-2 font-medium text-gray-900">{contract.amount || '—'}</p>
+        </div>
+        <div className="rounded-lg border bg-gray-50 p-4 md:col-span-1">
+          <p className="text-gray-500">Предмет</p>
+          <p className="mt-2 font-medium text-gray-900">{contract.object || '—'}</p>
+        </div>
       </div>
 
       {/* Файлы */}
