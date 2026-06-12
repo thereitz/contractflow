@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import NotificationBell from '@/components/NotificationBell'
 
@@ -11,6 +12,13 @@ export default function DashboardLayout({
 }) {
   const router = useRouter()
   const pathname = usePathname()
+  const [department, setDepartment] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(json => setDepartment(json.data?.department?.name ?? null))
+  }, [])
 
   function navLink(href: string) {
     const base = 'text-sm px-3 py-1 rounded-md'
@@ -47,7 +55,10 @@ export default function DashboardLayout({
           <Link href="/logs" className={navLink('/logs')}>
             Журнал
           </Link>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            {department && (
+              <span className="text-sm text-gray-500">{department}</span>
+            )}
             <button
               onClick={handleLogout}
               className="text-sm text-gray-600 hover:text-gray-900"

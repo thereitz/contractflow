@@ -75,4 +75,15 @@ export async function POST(req: NextRequest) {
       initiatorId: user.id,
     }
   })
+
+  await prisma.activityLog.create({
+    data: {
+      contractId: contract.id,
+      userId: user.id,
+      action: 'contract.created',
+      metadata: { title: contract.title, counterparty: contract.counterparty },
+    }
+  })
+
+  return NextResponse.json({ data: contract }, { status: 201 })
 }

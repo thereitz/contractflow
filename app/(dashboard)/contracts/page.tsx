@@ -33,6 +33,7 @@ export default function ContractsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'REQUESTED'>('ALL')
   const [loading, setLoading] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   const isLawyer = currentUser?.role === 'LAWYER' || currentUser?.role === 'SUPER_ADMIN'
 
@@ -86,13 +87,42 @@ export default function ContractsPage() {
     if (res.ok) {
       setForm({ title: '', counterparty: '', object: '', amount: '' })
       setShowForm(false)
-      await load()
+      if (!isLawyer) {
+        setShowSuccessModal(true)
+      } else {
+        await load()
+      }
     }
     setLoading(false)
   }
 
   return (
     <div>
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full mx-4 text-center">
+            <div className="mb-4 flex items-center justify-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+                <svg className="h-7 w-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Успешно отправлено</h2>
+            <p className="text-sm text-gray-500 mb-6">Договор передан юристу на рассмотрение.</p>
+            <button
+              onClick={async () => {
+                setShowSuccessModal(false)
+                await load()
+              }}
+              className="btn w-full"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Договоры</h1>
         <button
@@ -209,18 +239,19 @@ export default function ContractsPage() {
                 <div className="text-right">
                   <div className="text-sm text-gray-500">{new Date(c.createdAt).toLocaleDateString('ru-RU')}</div>
                           <div className="mt-2 flex flex-wrap gap-2">
-                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
-                      c.status === 'SIGNED'
-                      ? 'bg-green-100 text-green-700'
-                      : c.status === 'ARCHIVED'
-                      ? 'bg-gray-100 text-gray-700'
-                      : 'bg-primary-50 text-primary-700'
-                    }`}>
-                      {STATUS_LABELS[c.status]}
-                    </span>
-                    {isRequestedContract(c) && (
-                      <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-700 px-2 py-1 text-xs font-semibold">
-                        Запрошен юристом
+                    {isRequestedContract(c) ? (
+                      <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-2 py-1 text-xs font-semibold">
+                        На рассмотрении у юриста
+                      </span>
+                    ) : (
+                      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
+                        c.status === 'SIGNED'
+                        ? 'bg-green-100 text-green-700'
+                        : c.status === 'ARCHIVED'
+                        ? 'bg-gray-100 text-gray-700'
+                        : 'bg-primary-50 text-primary-700'
+                      }`}>
+                        {STATUS_LABELS[c.status]}
                       </span>
                     )}
                   </div>

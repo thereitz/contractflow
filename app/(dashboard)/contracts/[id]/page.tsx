@@ -31,6 +31,8 @@ export default function ContractPage() {
   const [showDeptForm, setShowDeptForm] = useState(false)
   const [showReturnForm, setShowReturnForm] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editMode, setEditMode] = useState(false)
+  const [editForm, setEditForm] = useState({ title: '', counterparty: '', object: '', amount: '' })
 
   async function load() {
     if (!id) return
@@ -170,6 +172,26 @@ export default function ContractPage() {
     }
   }
 
+  async function handleEdit() {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/contracts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Не удалось сохранить')
+      setEditMode(false)
+      await load()
+    } catch (err: any) {
+      setError(err?.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleComment() {
     if (!comment.trim()) return
     setLoading(true)
@@ -240,6 +262,22 @@ export default function ContractPage() {
               Запрошен юристом
             </span>
           )}
+          {isLawyer && !['SIGNED', 'ARCHIVED'].includes(contract.status) && !editMode && (
+            <button
+              onClick={() => {
+                setEditForm({
+                  title: contract.title,
+                  counterparty: contract.counterparty,
+                  object: contract.object || '',
+                  amount: contract.amount ? String(contract.amount) : '',
+                })
+                setEditMode(true)
+              }}
+              className="btn btn-secondary text-sm"
+            >
+              Редактировать
+            </button>
+          )}
           {contract.status === 'SIGNED' &&
            ['SUPER_ADMIN', 'ADMIN', 'LAWYER'].includes(currentUser?.role) && (
             <ArchiveButton
@@ -249,6 +287,38 @@ export default function ContractPage() {
           )}
         </div>
       </div>
+
+      {/* Форма редактирования */}
+      {editMode && (
+        <div className="mb-6 rounded-lg border bg-gray-50 p-4 grid grid-cols-2 gap-3">
+          <input
+            placeholder="Название *"
+            value={editForm.title}
+            onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+            className="col-span-2"
+          />
+          <input
+            placeholder="Контрагент *"
+            value={editForm.counterparty}
+            onChange={e => setEditForm({ ...editForm, counterparty: e.target.value })}
+            className="col-span-2"
+          />
+          <input
+            placeholder="Сумма"
+            value={editForm.amount}
+            onChange={e => setEditForm({ ...editForm, amount: e.target.value })}
+          />
+          <input
+            placeholder="Предмет договора"
+            value={editForm.object}
+            onChange={e => setEditForm({ ...editForm, object: e.target.value })}
+          />
+          <div className="col-span-2 flex gap-2">
+            <button onClick={handleEdit} disabled={loading} className="btn">Сохранить</button>
+            <button onClick={() => setEditMode(false)} className="btn btn-secondary">Отмена</button>
+          </div>
+        </div>
+      )}
 
       {/* Основные поля */}
       <div className="grid gap-4 md:grid-cols-3 mb-6 text-sm">

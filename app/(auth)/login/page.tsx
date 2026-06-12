@@ -31,6 +31,14 @@ export default function LoginPage() {
     window.location.href = '/contracts'
   }
 
+  const DEV_USERS = [
+    { label: 'Супер Админ', email: 'super@contractflow.dev' },
+    { label: 'Администратор', email: 'admin@contractflow.dev' },
+    { label: 'Юрист Иванов', email: 'lawyer@contractflow.dev' },
+    { label: 'Начальник Коммерческого', email: 'head@contractflow.dev' },
+    { label: 'Сотрудник Коммерческого', email: 'staff@contractflow.dev' },
+  ]
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="card w-full max-w-sm">
@@ -65,6 +73,23 @@ export default function LoginPage() {
             {loading ? 'Вход...' : 'Войти'}
           </button>
         </form>
+
+        <div className="mt-6 border-t pt-4">
+          <p className="text-xs text-gray-400 mb-2">Быстрый вход · пароль: <span className="font-mono">password123</span></p>
+          <div className="space-y-1">
+            {DEV_USERS.map(u => (
+              <button
+                key={u.email}
+                type="button"
+                onClick={() => { setEmail(u.email); setPassword('password123') }}
+                className="w-full text-left px-3 py-2 rounded-md text-sm hover:bg-gray-100 flex items-center justify-between group"
+              >
+                <span className="text-gray-700">{u.label}</span>
+                <span className="text-gray-400 text-xs group-hover:text-gray-600">{u.email}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
