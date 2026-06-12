@@ -85,7 +85,7 @@ export default function ProfilePage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="rounded-lg border bg-white p-6 shadow-sm">
+        <div className="card">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Имя</label>
@@ -117,14 +117,13 @@ export default function ProfilePage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="btn"
             >
               Сохранить
             </button>
           </div>
         </div>
-
-        <div className="rounded-lg border bg-white p-6 shadow-sm">
+        <div className="card">
           <div className="space-y-4 text-sm text-gray-700">
             <div>
               <div className="font-medium text-gray-500">Роль</div>

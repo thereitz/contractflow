@@ -43,33 +43,31 @@ export default function DepartmentsPage() {
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder="Название отдела"
-          className="border rounded px-3 py-2 text-sm w-64"
+          className="w-64"
         />
         <button
           onClick={handleCreate}
           disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded text-sm"
+          className="btn"
         >
           Добавить
         </button>
       </div>
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left py-2 text-sm font-medium">Название</th>
-            <th className="text-left py-2 text-sm font-medium">Сотрудников</th>
-          </tr>
-        </thead>
-        <tbody>
+      {departments.length === 0 ? (
+        <div className="py-8 text-center text-sm text-gray-500">Отделов нет</div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {departments.map(d => (
-            <tr key={d.id} className="border-b">
-              <td className="py-2 text-sm">{d.name}</td>
-              <td className="py-2 text-sm">{d._count.users}</td>
-            </tr>
+            <div key={d.id} className="card flex items-center justify-between">
+              <div>
+                <div className="font-medium">{d.name}</div>
+              </div>
+              <div className="text-sm text-gray-500">{d._count.users}</div>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      )}
     </div>
   )
 }

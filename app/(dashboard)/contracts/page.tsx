@@ -143,39 +143,40 @@ export default function ContractsPage() {
         </div>
       )}
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left py-2 text-sm font-medium">Название</th>
-            <th className="text-left py-2 text-sm font-medium">Контрагент</th>
-            <th className="text-left py-2 text-sm font-medium">Статус</th>
-            <th className="text-left py-2 text-sm font-medium">Инициатор</th>
-            <th className="text-left py-2 text-sm font-medium">Дата</th>
-          </tr>
-        </thead>
-        <tbody>
+      {contracts.length === 0 ? (
+        <div className="py-8 text-center text-sm text-gray-500">Договоров пока нет</div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {contracts.map(c => (
-            <tr key={c.id} className="border-b hover:bg-gray-50">
-              <td className="py-2 text-sm">
-                <Link href={`/contracts/${c.id}`} className="text-blue-600 hover:underline">
-                  {c.title}
-                </Link>
-              </td>
-              <td className="py-2 text-sm">{c.counterparty}</td>
-              <td className="py-2 text-sm">{STATUS_LABELS[c.status]}</td>
-              <td className="py-2 text-sm">{c.initiator.name}</td>
-              <td className="py-2 text-sm">{new Date(c.createdAt).toLocaleDateString('ru-RU')}</td>
-            </tr>
+            <div key={c.id} className="card">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    <Link href={`/contracts/${c.id}`} className="text-primary-700 hover:underline">
+                      {c.title}
+                    </Link>
+                  </h3>
+                  <div className="text-sm text-gray-600 mt-1">{c.counterparty}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">{new Date(c.createdAt).toLocaleDateString('ru-RU')}</div>
+                  <div className="mt-2">
+                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
+                      c.status === 'SIGNED' ? 'bg-green-100 text-green-700' : c.status === 'ARCHIVED' ? 'bg-gray-100 text-gray-700' : 'bg-primary-50 text-primary-700'
+                    }`}>
+                      {STATUS_LABELS[c.status]}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-sm text-gray-700">Инициатор: {c.initiator.name}</div>
+                <Link href={`/contracts/${c.id}`} className="btn">Открыть</Link>
+              </div>
+            </div>
           ))}
-          {contracts.length === 0 && (
-            <tr>
-              <td colSpan={5} className="py-8 text-center text-sm text-gray-500">
-                Договоров пока нет
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+        </div>
+      )}
     </div>
   )
 }

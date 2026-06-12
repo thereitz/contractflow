@@ -56,56 +56,48 @@ export default function UsersPage() {
         <h1 className="text-2xl font-semibold">Пользователи</h1>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded text-sm"
+          className="btn"
         >
           + Добавить
         </button>
       </div>
 
       {showForm && (
-        <div className="border rounded p-4 mb-6 bg-gray-50 grid grid-cols-2 gap-3">
-          <input placeholder="Имя" value={form.name} onChange={e => setForm({...form, name: e.target.value})}
-            className="border rounded px-3 py-2 text-sm" />
-          <input placeholder="Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})}
-            className="border rounded px-3 py-2 text-sm" />
-          <input placeholder="Пароль" type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})}
-            className="border rounded px-3 py-2 text-sm" />
-          <select value={form.role} onChange={e => setForm({...form, role: e.target.value})}
-            className="border rounded px-3 py-2 text-sm">
+        <div className="card mb-6 grid grid-cols-2 gap-3">
+          <input placeholder="Имя" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+          <input placeholder="Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+          <input placeholder="Пароль" type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
+          <select value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
             {ROLES.map(r => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
           </select>
-          <select value={form.departmentId} onChange={e => setForm({...form, departmentId: e.target.value})}
-            className="border rounded px-3 py-2 text-sm">
+          <select value={form.departmentId} onChange={e => setForm({...form, departmentId: e.target.value})}>
             <option value="">Без отдела</option>
             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
-          <button onClick={handleCreate} disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded text-sm">
-            Сохранить
-          </button>
+          <button onClick={handleCreate} disabled={loading} className="btn">Сохранить</button>
         </div>
       )}
 
-      <table className="w-full border-collapse">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left py-2 text-sm font-medium">Имя</th>
-            <th className="text-left py-2 text-sm font-medium">Email</th>
-            <th className="text-left py-2 text-sm font-medium">Роль</th>
-            <th className="text-left py-2 text-sm font-medium">Отдел</th>
-          </tr>
-        </thead>
-        <tbody>
+      {users.length === 0 ? (
+        <div className="py-8 text-center text-sm text-gray-500">Пользователей нет</div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {users.map(u => (
-            <tr key={u.id} className="border-b">
-              <td className="py-2 text-sm">{u.name}</td>
-              <td className="py-2 text-sm">{u.email}</td>
-              <td className="py-2 text-sm">{ROLE_LABELS[u.role]}</td>
-              <td className="py-2 text-sm">{u.department?.name || '—'}</td>
-            </tr>
+            <div key={u.id} className="card">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-semibold">{u.name}</div>
+                  <div className="text-sm text-gray-600">{u.email}</div>
+                </div>
+                <div className="text-sm text-gray-500">{u.department?.name || '—'}</div>
+              </div>
+              <div className="mt-3">
+                <span className="badge">{ROLE_LABELS[u.role]}</span>
+              </div>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
+      )}
     </div>
   )
 }

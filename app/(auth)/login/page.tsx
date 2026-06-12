@@ -33,7 +33,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow w-full max-w-sm">
+      <div className="card w-full max-w-sm">
         <h1 className="text-2xl font-semibold mb-6 text-center">ContractFlow</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -60,7 +60,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="w-full btn disabled:opacity-50"
           >
             {loading ? 'Вход...' : 'Войти'}
           </button>

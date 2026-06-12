@@ -209,8 +209,14 @@ export default function ContractPage() {
     (cd: any) => cd.departmentId === currentUser?.departmentId
   )
 
+  const statusClass = contract.status === 'SIGNED'
+    ? 'bg-green-100 text-green-700'
+    : contract.status === 'ARCHIVED'
+    ? 'bg-gray-100 text-gray-700'
+    : 'bg-primary-50 text-primary-700'
+
   return (
-    <div className="max-w-4xl">
+    <div className="card max-w-4xl">
       {error && (
         <div className="mb-4 rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -224,7 +230,7 @@ export default function ContractPage() {
           <p className="text-gray-500 text-sm mt-1">{contract.counterparty}</p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="border rounded px-3 py-1 text-sm">
+          <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${statusClass}`}>
             {STATUS_LABELS[contract.status]}
           </span>
           {contract.status === 'SIGNED' &&
@@ -265,19 +271,19 @@ export default function ContractPage() {
           <div className="flex gap-2 flex-wrap">
             {isLawyer && unassignedDepts.length > 0 && (
               <button onClick={() => setShowDeptForm(!showDeptForm)}
-                className="text-sm border px-3 py-1 rounded">
-                + Назначить
-              </button>
+                  className="btn btn-secondary text-sm px-3 py-1">
+                  + Назначить
+                </button>
             )}
             {isLawyer && contract.status === 'DRAFT' && (contract.contractDepartments?.length ?? 0) > 0 && (
               <button onClick={handleSendCollecting} disabled={loading}
-                className="text-sm bg-blue-600 text-white px-3 py-1 rounded">
+                className="btn">
                 Отправить на сбор информации
               </button>
             )}
             {isLawyer && contract.status === 'REVIEWING' && (
               <button onClick={handleSendApproval} disabled={loading}
-                className="text-sm bg-green-600 text-white px-3 py-1 rounded">
+                className="btn">
                 Отправить на согласование
               </button>
             )}
@@ -294,7 +300,7 @@ export default function ContractPage() {
               </label>
             ))}
             <button onClick={handleAssignDepts} disabled={loading}
-              className="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm">
+              className="btn mt-2">
               Сохранить
             </button>
           </div>
@@ -312,7 +318,7 @@ export default function ContractPage() {
                   && cd.status !== 'SUBMITTED' && (
                   <button onClick={() => handleDeptStatus(cd.departmentId, 'SUBMITTED')}
                     disabled={loading}
-                    className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                    className="btn btn-secondary text-xs px-2 py-1">
                     Подтвердить сдачу
                   </button>
                 )}
@@ -329,11 +335,11 @@ export default function ContractPage() {
           {!showReturnForm ? (
             <div className="flex gap-2">
               <button onClick={() => handleApproval('APPROVED')} disabled={loading}
-                className="bg-green-600 text-white px-4 py-2 rounded text-sm">
+                className="btn">
                 Согласовать
               </button>
               <button onClick={() => setShowReturnForm(true)}
-                className="border border-red-400 text-red-600 px-4 py-2 rounded text-sm">
+                className="btn btn-secondary">
                 Вернуть на доработку
               </button>
             </div>
@@ -341,14 +347,14 @@ export default function ContractPage() {
             <div>
               <textarea value={returnComment} onChange={e => setReturnComment(e.target.value)}
                 placeholder="Причина возврата..."
-                className="border rounded px-3 py-2 text-sm w-full mb-2" rows={3} />
+                className="mt-1 w-full mb-2" rows={3} />
               <div className="flex gap-2">
                 <button onClick={() => handleApproval('RETURNED')} disabled={loading}
-                  className="bg-red-600 text-white px-4 py-2 rounded text-sm">
+                  className="btn btn-secondary">
                   Подтвердить возврат
                 </button>
                 <button onClick={() => setShowReturnForm(false)}
-                  className="border px-4 py-2 rounded text-sm">
+                  className="btn btn-secondary">
                   Отмена
                 </button>
               </div>
