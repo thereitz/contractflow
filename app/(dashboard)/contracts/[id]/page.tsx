@@ -215,6 +215,8 @@ export default function ContractPage() {
     ? 'bg-gray-100 text-gray-700'
     : 'bg-primary-50 text-primary-700'
 
+  const isRequestedContract = contract.status === 'DRAFT' && contract.title?.startsWith('Запрос:')
+
   return (
     <div className="card max-w-4xl">
       {error && (
@@ -233,6 +235,11 @@ export default function ContractPage() {
           <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${statusClass}`}>
             {STATUS_LABELS[contract.status]}
           </span>
+          {isRequestedContract && (
+            <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-3 py-1 text-sm font-semibold">
+              Запрошен юристом
+            </span>
+          )}
           {contract.status === 'SIGNED' &&
            ['SUPER_ADMIN', 'ADMIN', 'LAWYER'].includes(currentUser?.role) && (
             <ArchiveButton

@@ -11,9 +11,14 @@ export async function GET(req: NextRequest) {
 
   const baseWhere = ['HEAD', 'EMPLOYEE'].includes(user.role) && user.departmentId
     ? {
-        contractDepartments: {
-          some: { departmentId: user.departmentId }
-        }
+        OR: [
+          { initiatorId: user.id },
+          {
+            contractDepartments: {
+              some: { departmentId: user.departmentId }
+            }
+          }
+        ]
       }
     : {}
 
@@ -35,7 +40,7 @@ export async function GET(req: NextRequest) {
     where,
     orderBy: { createdAt: 'desc' },
     include: {
-      initiator: { select: { name: true } },
+      initiator: { select: { id: true, name: true, role: true } },
       _count: { select: { contractDepartments: true } }
     }
   })
@@ -45,33 +50,29 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (!['LAWYER', 'SUPER_ADMIN'].includes(user.role)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
 
   const { title, counterparty, object, amount } = await req.json()
-  if (!title || !counterparty) {
-    return NextResponse.json({ error: 'Название и контрагент обязательны' }, { status: 400 })
+  if (!counterparty) {
+    return NextResponse.json({ error: 'Контрагент обязателен' }, { status: 400 })
   }
 
+  if (!['LAWYER', 'SUPER_ADMIN'].includes(user.role) && title) {
+    return NextResponse.json({ error: 'Только юрист может указывать название договора' }, { status: 403 })
+  }
+
+  if (['LAWYER', 'SUPER_ADMIN'].includes(user.role) && !title) {
+    return NextResponse.json({ error: 'Название договора обязательно для юриста' }, { status: 400 })
+  }
+
+  const actualTitle = title || `Запрос: ${counterparty}`
   const contract = await prisma.contract.create({
     data: {
-      title,
+      title: actualTitle,
       counterparty,
       object: object || null,
       amount: amount || null,
+      status: 'DRAFT',
       initiatorId: user.id,
     }
   })
-
-  await prisma.activityLog.create({
-    data: {
-      contractId: contract.id,
-      userId: user.id,
-      action: 'contract.created',
-      metadata: { title, counterparty }
-    }
-  })
-
-  return NextResponse.json({ data: contract }, { status: 201 })
 }
