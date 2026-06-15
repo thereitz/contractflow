@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import ArchiveButton from '@/components/ArchiveButton'
+import DepartmentFiles from '@/components/DepartmentFiles'
+import DepartmentSubmissionForm from '@/components/DepartmentSubmissionForm'
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Черновик',
@@ -362,9 +364,8 @@ export default function ContractPage() {
                 </button>
             )}
             {isLawyer && contract.status === 'DRAFT' && (contract.contractDepartments?.length ?? 0) > 0 && (
-              <button onClick={handleSendCollecting} disabled={loading}
-                className="btn">
-                Отправить на сбор информации
+              <button onClick={handleSendCollecting} disabled={loading} className="btn">
+                Запустить сбор информации
               </button>
             )}
             {isLawyer && contract.status === 'REVIEWING' && (
@@ -395,20 +396,50 @@ export default function ContractPage() {
         {(contract.contractDepartments?.length ?? 0) === 0
           ? <p className="text-sm text-gray-500">Отделы не назначены</p>
           : contract.contractDepartments.map((cd: any) => (
-            <div key={cd.id} className="text-sm border-b py-2 flex justify-between items-center">
-              <span>{cd.department.name}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">{DEPT_STATUS_LABELS[cd.status]}</span>
-                {isHead && currentUser?.departmentId === cd.departmentId
-                  && contract.status === 'COLLECTING'
-                  && cd.status !== 'SUBMITTED' && (
-                  <button onClick={() => handleDeptStatus(cd.departmentId, 'SUBMITTED')}
-                    disabled={loading}
-                    className="btn btn-secondary text-xs px-2 py-1">
-                    Подтвердить сдачу
-                  </button>
-                )}
+            <div key={cd.id} className="border-b py-3">
+              <div className="text-sm flex justify-between items-center">
+                <span className="font-medium">{cd.department.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">{DEPT_STATUS_LABELS[cd.status]}</span>
+                  {isHead && currentUser?.departmentId === cd.departmentId
+                    && contract.status === 'COLLECTING'
+                    && cd.status !== 'SUBMITTED' && (
+                    <button onClick={() => handleDeptStatus(cd.departmentId, 'SUBMITTED')}
+                      disabled={loading}
+                      className="btn btn-secondary text-xs px-2 py-1">
+                      Подтвердить сдачу
+                    </button>
+                  )}
+                </div>
               </div>
+              {(isLawyer || currentUser?.departmentId === cd.departmentId) && (
+                <>
+                  <DepartmentSubmissionForm
+                    contractId={id as string}
+                    deptId={cd.departmentId}
+                    departmentName={cd.department.name}
+                    initialSubmission={cd.submission ?? null}
+                    canEdit={
+                      (isHead || currentUser?.role === 'EMPLOYEE') &&
+                      currentUser?.departmentId === cd.departmentId &&
+                      cd.status !== 'SUBMITTED' &&
+                      contract.status === 'COLLECTING'
+                    }
+                    isLawyer={isLawyer}
+                    onSaved={load}
+                  />
+                  <DepartmentFiles
+                    contractId={id as string}
+                    deptId={cd.departmentId}
+                    canUpload={
+                      (isHead || currentUser?.role === 'EMPLOYEE') &&
+                      currentUser?.departmentId === cd.departmentId &&
+                      cd.status !== 'SUBMITTED' &&
+                      contract.status === 'COLLECTING'
+                    }
+                  />
+                </>
+              )}
             </div>
           ))
         }

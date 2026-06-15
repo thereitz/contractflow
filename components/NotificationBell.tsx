@@ -2,23 +2,29 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 export default function NotificationBell() {
   const [count, setCount] = useState(0)
+  const pathname = usePathname()
+
+  async function fetchCount() {
+    try {
+      const res = await fetch('/api/notifications?countOnly=1', { cache: 'no-store' })
+      const data = await res.json()
+      if (data?.data?.count >= 0) setCount(data.data.count)
+    } catch {}
+  }
 
   useEffect(() => {
-    let mounted = true
-    fetch('/api/notifications?countOnly=1', { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => {
-        if (mounted && data?.data?.count >= 0) {
-          setCount(data.data.count)
-        }
-      })
-      .catch(() => {})
-    return () => {
-      mounted = false
-    }
+    fetchCount()
+  }, [pathname])
+
+  useEffect(() => {
+    // Мгновенно обнуляем когда страница уведомлений сообщает что всё прочитано
+    function onRead() { setCount(0) }
+    window.addEventListener('notifications-read', onRead)
+    return () => window.removeEventListener('notifications-read', onRead)
   }, [])
 
   return (

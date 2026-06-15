@@ -34,8 +34,8 @@ export default function UsersPage() {
       fetch('/api/users').then(r => r.json()),
       fetch('/api/departments').then(r => r.json()),
     ])
-    setUsers(u.data)
-    setDepartments(d.data)
+    setUsers(u.data ?? [])
+    setDepartments(d.data ?? [])
   }
 
   useEffect(() => { load() }, [])

@@ -28,7 +28,8 @@ export async function PATCH(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { ids } = await req.json()
+  const body = await req.text()
+  const { ids } = body ? JSON.parse(body) : {}
 
   if (Array.isArray(ids) && ids.length > 0) {
     await prisma.notification.updateMany({

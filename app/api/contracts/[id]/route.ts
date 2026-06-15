@@ -16,7 +16,13 @@ export async function GET(
       initiator: { select: { id: true, name: true } },
       files: { orderBy: { version: 'desc' } },
       contractDepartments: {
-        include: { department: true }
+        include: {
+          department: true,
+          files: {
+            orderBy: { createdAt: 'desc' },
+            include: { uploader: { select: { id: true, name: true } } },
+          },
+        }
       },
       comments: {
         orderBy: { createdAt: 'asc' },
