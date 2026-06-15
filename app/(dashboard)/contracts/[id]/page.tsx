@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import ArchiveButton from '@/components/ArchiveButton'
+import DepartmentFiles from '@/components/DepartmentFiles'
+import DepartmentSubmissionForm from '@/components/DepartmentSubmissionForm'
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: 'Черновик',
@@ -31,6 +33,8 @@ export default function ContractPage() {
   const [showDeptForm, setShowDeptForm] = useState(false)
   const [showReturnForm, setShowReturnForm] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editMode, setEditMode] = useState(false)
+  const [editForm, setEditForm] = useState({ title: '', counterparty: '', object: '', amount: '' })
 
   async function load() {
     if (!id) return
@@ -170,6 +174,26 @@ export default function ContractPage() {
     }
   }
 
+  async function handleEdit() {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/contracts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Не удалось сохранить')
+      setEditMode(false)
+      await load()
+    } catch (err: any) {
+      setError(err?.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleComment() {
     if (!comment.trim()) return
     setLoading(true)
@@ -215,6 +239,8 @@ export default function ContractPage() {
     ? 'bg-gray-100 text-gray-700'
     : 'bg-primary-50 text-primary-700'
 
+  const isRequestedContract = contract.status === 'DRAFT' && contract.title?.startsWith('Запрос:')
+
   return (
     <div className="card max-w-4xl">
       {error && (
@@ -224,15 +250,36 @@ export default function ContractPage() {
       )}
 
       {/* Заголовок + статус + кнопка архива */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="grid gap-4 md:grid-cols-[1fr_auto] items-start mb-6">
         <div>
-          <h1 className="text-2xl font-semibold">{contract.title}</h1>
-          <p className="text-gray-500 text-sm mt-1">{contract.counterparty}</p>
+          <h1 className="text-3xl font-semibold tracking-tight">{contract.title}</h1>
+          <p className="text-gray-500 text-sm mt-2">{contract.counterparty}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${statusClass}`}>
             {STATUS_LABELS[contract.status]}
           </span>
+          {isRequestedContract && (
+            <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-3 py-1 text-sm font-semibold">
+              Запрошен юристом
+            </span>
+          )}
+          {isLawyer && !['SIGNED', 'ARCHIVED'].includes(contract.status) && !editMode && (
+            <button
+              onClick={() => {
+                setEditForm({
+                  title: contract.title,
+                  counterparty: contract.counterparty,
+                  object: contract.object || '',
+                  amount: contract.amount ? String(contract.amount) : '',
+                })
+                setEditMode(true)
+              }}
+              className="btn btn-secondary text-sm"
+            >
+              Редактировать
+            </button>
+          )}
           {contract.status === 'SIGNED' &&
            ['SUPER_ADMIN', 'ADMIN', 'LAWYER'].includes(currentUser?.role) && (
             <ArchiveButton
@@ -243,11 +290,52 @@ export default function ContractPage() {
         </div>
       </div>
 
+      {/* Форма редактирования */}
+      {editMode && (
+        <div className="mb-6 rounded-lg border bg-gray-50 p-4 grid grid-cols-2 gap-3">
+          <input
+            placeholder="Название *"
+            value={editForm.title}
+            onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+            className="col-span-2"
+          />
+          <input
+            placeholder="Контрагент *"
+            value={editForm.counterparty}
+            onChange={e => setEditForm({ ...editForm, counterparty: e.target.value })}
+            className="col-span-2"
+          />
+          <input
+            placeholder="Сумма"
+            value={editForm.amount}
+            onChange={e => setEditForm({ ...editForm, amount: e.target.value })}
+          />
+          <input
+            placeholder="Предмет договора"
+            value={editForm.object}
+            onChange={e => setEditForm({ ...editForm, object: e.target.value })}
+          />
+          <div className="col-span-2 flex gap-2">
+            <button onClick={handleEdit} disabled={loading} className="btn">Сохранить</button>
+            <button onClick={() => setEditMode(false)} className="btn btn-secondary">Отмена</button>
+          </div>
+        </div>
+      )}
+
       {/* Основные поля */}
-      <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-        <div><span className="text-gray-500">Инициатор:</span> {contract.initiator.name}</div>
-        <div><span className="text-gray-500">Сумма:</span> {contract.amount || '—'}</div>
-        <div className="col-span-2"><span className="text-gray-500">Предмет:</span> {contract.object || '—'}</div>
+      <div className="grid gap-4 md:grid-cols-3 mb-6 text-sm">
+        <div className="rounded-lg border bg-gray-50 p-4">
+          <p className="text-gray-500">Инициатор</p>
+          <p className="mt-2 font-medium text-gray-900">{contract.initiator.name}</p>
+        </div>
+        <div className="rounded-lg border bg-gray-50 p-4">
+          <p className="text-gray-500">Сумма</p>
+          <p className="mt-2 font-medium text-gray-900">{contract.amount || '—'}</p>
+        </div>
+        <div className="rounded-lg border bg-gray-50 p-4 md:col-span-1">
+          <p className="text-gray-500">Предмет</p>
+          <p className="mt-2 font-medium text-gray-900">{contract.object || '—'}</p>
+        </div>
       </div>
 
       {/* Файлы */}
@@ -276,9 +364,8 @@ export default function ContractPage() {
                 </button>
             )}
             {isLawyer && contract.status === 'DRAFT' && (contract.contractDepartments?.length ?? 0) > 0 && (
-              <button onClick={handleSendCollecting} disabled={loading}
-                className="btn">
-                Отправить на сбор информации
+              <button onClick={handleSendCollecting} disabled={loading} className="btn">
+                Запустить сбор информации
               </button>
             )}
             {isLawyer && contract.status === 'REVIEWING' && (
@@ -309,20 +396,50 @@ export default function ContractPage() {
         {(contract.contractDepartments?.length ?? 0) === 0
           ? <p className="text-sm text-gray-500">Отделы не назначены</p>
           : contract.contractDepartments.map((cd: any) => (
-            <div key={cd.id} className="text-sm border-b py-2 flex justify-between items-center">
-              <span>{cd.department.name}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">{DEPT_STATUS_LABELS[cd.status]}</span>
-                {isHead && currentUser?.departmentId === cd.departmentId
-                  && contract.status === 'COLLECTING'
-                  && cd.status !== 'SUBMITTED' && (
-                  <button onClick={() => handleDeptStatus(cd.departmentId, 'SUBMITTED')}
-                    disabled={loading}
-                    className="btn btn-secondary text-xs px-2 py-1">
-                    Подтвердить сдачу
-                  </button>
-                )}
+            <div key={cd.id} className="border-b py-3">
+              <div className="text-sm flex justify-between items-center">
+                <span className="font-medium">{cd.department.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">{DEPT_STATUS_LABELS[cd.status]}</span>
+                  {isHead && currentUser?.departmentId === cd.departmentId
+                    && contract.status === 'COLLECTING'
+                    && cd.status !== 'SUBMITTED' && (
+                    <button onClick={() => handleDeptStatus(cd.departmentId, 'SUBMITTED')}
+                      disabled={loading}
+                      className="btn btn-secondary text-xs px-2 py-1">
+                      Подтвердить сдачу
+                    </button>
+                  )}
+                </div>
               </div>
+              {(isLawyer || currentUser?.departmentId === cd.departmentId) && (
+                <>
+                  <DepartmentSubmissionForm
+                    contractId={id as string}
+                    deptId={cd.departmentId}
+                    departmentName={cd.department.name}
+                    initialSubmission={cd.submission ?? null}
+                    canEdit={
+                      (isHead || currentUser?.role === 'EMPLOYEE') &&
+                      currentUser?.departmentId === cd.departmentId &&
+                      cd.status !== 'SUBMITTED' &&
+                      contract.status === 'COLLECTING'
+                    }
+                    isLawyer={isLawyer}
+                    onSaved={load}
+                  />
+                  <DepartmentFiles
+                    contractId={id as string}
+                    deptId={cd.departmentId}
+                    canUpload={
+                      (isHead || currentUser?.role === 'EMPLOYEE') &&
+                      currentUser?.departmentId === cd.departmentId &&
+                      cd.status !== 'SUBMITTED' &&
+                      contract.status === 'COLLECTING'
+                    }
+                  />
+                </>
+              )}
             </div>
           ))
         }

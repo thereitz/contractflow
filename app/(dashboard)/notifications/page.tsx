@@ -11,6 +11,11 @@ interface NotificationItem {
   createdAt: string
 }
 
+async function patchAllRead() {
+  await fetch('/api/notifications', { method: 'PATCH' })
+  window.dispatchEvent(new Event('notifications-read'))
+}
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -21,22 +26,21 @@ export default function NotificationsPage() {
     try {
       const res = await fetch('/api/notifications', { cache: 'no-store' })
       const json = await res.json()
-      if (res.ok) {
-        setNotifications(json.data ?? [])
-      }
+      if (res.ok) setNotifications(json.data ?? [])
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadNotifications()
+    // При открытии страницы — сразу помечаем всё прочитанным и загружаем список
+    patchAllRead().then(() => loadNotifications())
   }, [])
 
   async function markAllRead() {
     setSaving(true)
     try {
-      await fetch('/api/notifications', { method: 'PATCH' })
+      await patchAllRead()
       await loadNotifications()
     } finally {
       setSaving(false)
@@ -51,6 +55,7 @@ export default function NotificationsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: [id] }),
       })
+      window.dispatchEvent(new Event('notifications-read'))
       await loadNotifications()
     } finally {
       setSaving(false)
@@ -92,13 +97,17 @@ export default function NotificationsPage() {
                   </div>
                   <div className="text-right text-xs text-gray-500">
                     <div>{new Date(item.createdAt).toLocaleString('ru-RU')}</div>
-                    {!item.read && <span className="mt-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">Новое</span>}
+                    {!item.read && (
+                      <span className="mt-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
+                        Новое
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  {item.link ? (
+                  {item.link && (
                     <a href={item.link} className="text-sm text-blue-600 hover:underline">Перейти</a>
-                  ) : null}
+                  )}
                   {!item.read && (
                     <button
                       onClick={() => markRead(item.id)}

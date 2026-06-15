@@ -37,6 +37,22 @@ export async function POST(
     }))
   })
 
+  // Автоматически переводим в COLLECTING при первом назначении отделов
+  if (contract.status === 'DRAFT' && newIds.length > 0) {
+    await prisma.contract.update({
+      where: { id: params.id },
+      data: { status: 'COLLECTING' },
+    })
+    await prisma.activityLog.create({
+      data: {
+        contractId: params.id,
+        userId: user.id,
+        action: 'contract.status_changed',
+        metadata: { from: 'DRAFT', to: 'COLLECTING' },
+      },
+    })
+  }
+
   for (const departmentId of newIds) {
     const dept = await prisma.department.findUnique({
       where: { id: departmentId },
